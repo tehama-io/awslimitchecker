@@ -76,12 +76,13 @@ class _WorkspacesService(_AwsService):
         iter = paginator.paginate()
         for page in iter:
             for workspace in page['Workspaces']:
-                if bundles_map[workspace['BundleId']] == 'VALUE':
-                    count_performance += 1
-                elif bundles_map[workspace['BundleId']] == 'STANDARD':
-                    count_standard += 1
-                elif bundles_map[workspace['BundleId']] == 'PERFORMANCE':
-                    count_performance += 1
+                if workspace['BundleId'] in bundles_map:
+                    if bundles_map[workspace['BundleId']] == 'VALUE':
+                        count_performance += 1
+                    elif bundles_map[workspace['BundleId']] == 'STANDARD':
+                        count_standard += 1
+                    elif bundles_map[workspace['BundleId']] == 'PERFORMANCE':
+                        count_performance += 1
         self.limits['VALUE']._add_current_usage(
             count_value,
             aws_type='AWS::Workspaces'

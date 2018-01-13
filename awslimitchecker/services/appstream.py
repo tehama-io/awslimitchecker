@@ -90,7 +90,7 @@ class _AppstreamService(_AwsService):
             5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::AppStream',
+            limit_type='AWS::Appstream',
         )
 
         limits['Fleets'] = AwsLimit(
@@ -99,7 +99,7 @@ class _AppstreamService(_AwsService):
             5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::AppStream',
+            limit_type='AWS::Appstream',
         )
         # TODO
         # limits['Streaming instances'] = AwsLimit(
@@ -108,7 +108,7 @@ class _AppstreamService(_AwsService):
         #     5,
         #     self.warning_threshold,
         #     self.critical_threshold,
-        #     limit_type='AWS::AppStream',
+        #     limit_type='AWS::Appstream',
         # )
 
         limits['Images'] = AwsLimit(
@@ -117,7 +117,7 @@ class _AppstreamService(_AwsService):
             5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::AppStream',
+            limit_type='AWS::Appstream',
         )
 
         limits['Image builders'] = AwsLimit(
@@ -126,7 +126,7 @@ class _AppstreamService(_AwsService):
             5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::AppStream',
+            limit_type='AWS::Appstream',
         )
         limits['Users'] = AwsLimit(
             'Users',
@@ -134,7 +134,7 @@ class _AppstreamService(_AwsService):
             5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::AppStream',
+            limit_type='AWS::Appstream',
         )
 
         self.limits = limits
@@ -153,7 +153,7 @@ class _AppstreamService(_AwsService):
                 else:
                     next_token = None
         self.limits['Stacks']._add_current_usage(
-            count, aws_type='AWS::AppStream'
+            count, aws_type='AWS::Appstream'
         )
 
     def _find_usage_fleets(self):
@@ -169,7 +169,7 @@ class _AppstreamService(_AwsService):
                 else:
                     next_token = None
         self.limits['Fleets']._add_current_usage(
-            count, aws_type='AWS::AppStream'
+            count, aws_type='AWS::Appstream'
         )
 
     def _find_usage_images(self):
@@ -185,7 +185,7 @@ class _AppstreamService(_AwsService):
                 else:
                     next_token = None
         self.limits['Images']._add_current_usage(
-            count, aws_type='AWS::AppStream'
+            count, aws_type='AWS::Appstream'
         )
     
     def _find_usage_image_builders(self):
@@ -201,7 +201,7 @@ class _AppstreamService(_AwsService):
                 else:
                     next_token = None
         self.limits['Image builders']._add_current_usage(
-            count, aws_type='AWS::AppStream'
+            count, aws_type='AWS::Appstream'
         )
 
     def _find_usage_users(self):
@@ -220,7 +220,7 @@ class _AppstreamService(_AwsService):
                 if directory['State'] == 'REGISTERED':
                     count += 1
         self.limits['Users']._add_current_usage(
-            count, aws_type='AWS::AppStream'
+            count, aws_type='AWS::Appstream'
         )
         # Reset api client to appstream
         self.api_name = 'appstream' 
