@@ -57,6 +57,8 @@ from awslimitchecker.services.dynamodb import _DynamodbService
 from awslimitchecker.services.apigateway import _ApigatewayService
 from awslimitchecker.services.directoryservice import _DirectoryserviceService
 from awslimitchecker.services.ecs import _EcsService
+from awslimitchecker.services.appstream import _AppstreamService
+from awslimitchecker.services.workspaces import _WorkspacesService
 
 # dynamically generate the service name to class dict
 _services = {}

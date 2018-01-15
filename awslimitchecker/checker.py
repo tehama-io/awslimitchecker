@@ -135,14 +135,14 @@ class AwsLimitChecker(object):
         # for further information.
         # ###### IMPORTANT license notice ##########
         self.vinfo = _get_version_info()
-        sys.stderr.write(
-            "awslimitchecker %s is AGPL-licensed free software; "
-            "all users have a right to the full source code of "
-            "this version. See <%s>\n" % (
-                self.vinfo.version_str,
-                self.vinfo.url
-            )
-        )
+        # sys.stderr.write(
+        #     "awslimitchecker %s is AGPL-licensed free software; "
+        #     "all users have a right to the full source code of "
+        #     "this version. See <%s>\n" % (
+        #         self.vinfo.version_str,
+        #         self.vinfo.url
+        #     )
+        # )
         if check_version:
             latest_ver = _get_latest_version()
             if latest_ver is not None:
