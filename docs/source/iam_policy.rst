@@ -10,7 +10,13 @@ Required IAM Permissions
 ========================
 
 Below is the sample IAM policy from this version of awslimitchecker, listing the IAM
-permissions required for it to function correctly:
+permissions required for it to function correctly. Please note that in some cases
+awslimitchecker may cause AWS services to make additional API calls on your behalf
+(such as when enumerating ElasticBeanstalk resources, the ElasticBeanstalk service
+itself will make ``s3:ListBucket`` and ``s3:GetBucketLocation`` calls). The policy
+below includes only the bare minimum permissions for awslimitchecker to function
+properly, and does not include permissions for any side-effect calls made by AWS
+services that do not affect the results of this program.
 
 .. code-block:: json
 
@@ -26,6 +32,9 @@ permissions required for it to function correctly:
             "autoscaling:DescribeLaunchConfigurations", 
             "cloudformation:DescribeAccountLimits", 
             "cloudformation:DescribeStacks", 
+            "cloudtrail:DescribeTrails", 
+            "cloudtrail:GetEventSelectors", 
+            "ds:GetDirectoryLimits", 
             "dynamodb:DescribeLimits", 
             "dynamodb:DescribeTable", 
             "dynamodb:ListTables", 
@@ -50,6 +59,10 @@ permissions required for it to function correctly:
             "ec2:DescribeVolumes", 
             "ec2:DescribeVpcs", 
             "ec2:DescribeVpnGateways", 
+            "ecs:DescribeClusters", 
+            "ecs:DescribeServices", 
+            "ecs:ListClusters", 
+            "ecs:ListServices", 
             "elasticache:DescribeCacheClusters", 
             "elasticache:DescribeCacheParameterGroups", 
             "elasticache:DescribeCacheSecurityGroups", 
@@ -76,6 +89,9 @@ permissions required for it to function correctly:
             "rds:DescribeReservedDBInstances", 
             "redshift:DescribeClusterSnapshots", 
             "redshift:DescribeClusterSubnetGroups", 
+            "route53:GetHostedZone", 
+            "route53:GetHostedZoneLimit", 
+            "route53:ListHostedZones", 
             "s3:ListAllMyBuckets", 
             "ses:GetSendQuota", 
             "support:*", 

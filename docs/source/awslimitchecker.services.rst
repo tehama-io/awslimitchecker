@@ -1,5 +1,5 @@
-awslimitchecker\.services package
-=================================
+awslimitchecker.services package
+================================
 
 .. automodule:: awslimitchecker.services
     :members:
@@ -16,6 +16,7 @@ Submodules
    awslimitchecker.services.autoscaling
    awslimitchecker.services.base
    awslimitchecker.services.cloudformation
+   awslimitchecker.services.cloudtrail
    awslimitchecker.services.directoryservice
    awslimitchecker.services.dynamodb
    awslimitchecker.services.ebs
@@ -29,6 +30,7 @@ Submodules
    awslimitchecker.services.iam
    awslimitchecker.services.rds
    awslimitchecker.services.redshift
+   awslimitchecker.services.route53
    awslimitchecker.services.s3
    awslimitchecker.services.ses
    awslimitchecker.services.vpc

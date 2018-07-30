@@ -1,6 +1,114 @@
 Changelog
 =========
 
+5.0.0 (2018-07-30)
+------------------
+
+This release **requires new IAM permissions**:
+
+* ``cloudtrail:DescribeTrails``
+* ``cloudtrail:GetEventSelectors``
+* ``route53:GetHostedZone``
+* ``route53:ListHostedZones``
+* ``route53:GetHostedZoneLimit``
+
+This release **officially drops support for Python 2.6 and 3.3.**
+
+* `PR #345 <https://github.com/jantman/awslimitchecker/pull/345>`_ / `Issue #349 <https://github.com/jantman/awslimitchecker/issues/349>`_ - Add Route53 service and checks for "Record sets per hosted zone" and "VPC associations per hosted zone" limits (the latter only for private zones). (thanks to `julienduchesne <https://github.com/julienduchesne>`_).
+* Support Per-Resource Limits (see below). **Note that this includes some changes to the ``awslimitchecker`` CLI output format and some minor API changes.**
+* `Issue #317 <https://github.com/jantman/awslimitchecker/issues/317>`_ - Officially drop support for Python 2.6 and 3.3. Also, begin testing py37.
+* `Issue #346 <https://github.com/jantman/awslimitchecker/issues/346>`_ - Update documentation for S3 API calls made by ElasticBeanstalk while retrieving EB limits (thanks to `fenichelar <https://github.com/fenichelar>`_ for finding this).
+* `PR #350 <https://github.com/jantman/awslimitchecker/pull/350>`_ - Add support for CloudTrail limits (thanks to `fpiche <https://github.com/fpiche>`_).
+* `Issue #352 <https://github.com/jantman/awslimitchecker/issues/352>`_ - Update version check PyPI URL and set User-Agent when performing version check.
+* `Issue #351 <https://github.com/jantman/awslimitchecker/issues/351>`_ - Add support for **forty two (42)** missing EC2 instance types including the new c5d/m5d/r5d/z1d series instances.
+
+Per-Resource Limits
++++++++++++++++++++
+
+Some Limits (:py:class:`~.AwsLimit`) now have limits/maxima that are per-resource rather than shared across all resources of a given type. The first limit of this kind that awslimitchecker supports is Route53, where the "Record sets per hosted zone" and "VPC associations per hosted zone" limits are set on a per-resource (per-zone) basis rather than globally to all zones in the account. Limits of this kind are also different since, as they are per-resource, they can only be enumerated at runtime. Supporting limits of this kind required some changes to the internals of awslimitchecker (specifically the :py:class:`~.AwsLimit` and :py:class:`~.AwsLimitUsage` classes) as well as to the output of the command line script/entrypoint.
+
+For limits which support different maxima/limit values per-resource, the command line ``awslimitchecker`` script ``-l`` / ``--list-limits`` functionality will now display them in Service/Limit/ResourceID format, i.e.:
+
+.. code-block:: none
+
+    Route53/Record sets per hosted zone/foo.com                  10000 (API)
+    Route53/Record sets per hosted zone/bar.com                  10000 (API)
+    Route53/Record sets per hosted zone/local.                   15000 (API)
+    Route53/VPC associations per hosted zone/local.              100 (API)
+
+As opposed to the Service/Limit format used for all existing limits, i.e.:
+
+.. code-block:: none
+
+    IAM/Groups             300 (API)
+    IAM/Instance profiles  2000 (API)
+
+If you are relying on the output format of the command line ``awslimitchecker`` script, please use the Python API instead.
+
+For users of the Python API, please take note of the new :py:meth:`.AwsLimit.has_resource_limits` and :py:meth:`~.AwsLimitUsage.get_maximum` methods which assist in how to identify limits that have per-resource maxima. Existing code that only surfaces awslimitchecker's warnings/criticals (the result of :py:meth:`~.AwsLimitChecker.check_thresholds`) will work without modification, but any code that displays or uses the current limit values themselves may need to be updated.
+
+4.0.2 (2018-03-22)
+------------------
+
+This is a minor bugfix release for one issue:
+
+* `Issue #341 <https://github.com/jantman/awslimitchecker/issues/341>`_ - The Trusted Advisor EBS checks for ``General Purpose (SSD) volume storage (GiB)`` and ``Magnetic volume storage (GiB)`` have been renamed to to ``General Purpose SSD (gp2) volume storage (GiB)`` and ``Magnetic (standard) volume storage (GiB)``, respectively, to provide more unified naming. This change was made on March 19th or 20th without any public announcement, and resulted in awslimitchecker being unable to determine the current values for these limits from Trusted Advisor. Users relying on Trusted Advisor for these values saw the limit values incorrectly revert to the global default. This is an internal-only change to map the new Trusted Advisor check names to the awslimitchecker limit names.
+
+4.0.1 (2018-03-09)
+------------------
+
+This is a minor bugfix release for a few issues that users have reported recently.
+
+* Fix `Issue #337 <https://github.com/jantman/awslimitchecker/issues/337>`_ where sometimes an account even with Business-level support will not have a Trusted Advisor result for the Service Limits check, and will return a result with ``status: not_available`` or a missing ``flaggedResources`` key.
+* Fix `Issue #335 <https://github.com/jantman/awslimitchecker/issues/335>`_ where runs against the EFS service in certain unsupported regions result in either a connection timeout or an AccessDeniedException.
+
+4.0.0 (2018-02-17)
+------------------
+
+This release **requires new IAM permissions**:
+
+* ``ds:GetDirectoryLimits``
+* ``ecs:DescribeClusters``
+* ``ecs:DescribeServices``
+* ``ecs:ListClusters``
+* ``ecs:ListServices``
+
+* Fix various docstring problems causing documentation build to fail.
+* `PR #328 <https://github.com/jantman/awslimitchecker/pull/328>`_ - Add support for Directory Service and ECS (thanks to `di1214 <https://github.com/di1214>`_).
+
+  * *NOTE* the "EC2 Tasks per Service (desired count)" limit uses non-standard resource IDs, as service names and ARNs aren't unique by account or region, but only by cluster. i.e. the only way to uniquely identify an ECS Service is by the combination of service and cluster. As such, the ``resource_id`` field for usage values of the "EC2 Tasks per Service (desired count)" limit is a string of the form ``cluster=CLUSTER-NAME; service=SERVICE-NAME``.
+
+* `PR #330 <https://github.com/jantman/awslimitchecker/pull/330>`_ - Update numerous no-longer-correct default limits (thanks to GitHub user KingRogue).
+
+  * AutoScaling
+
+    * Auto Scaling groups - 20 to 200
+    * Launch configurations - 100 to 200
+
+  * EBS
+
+    * Provisioned IOPS - 40000 to 200000
+    * Provisioned IOPS (SSD) storage (GiB) - 20480 to 102400 (100 TiB)
+    * General Purpose (SSD) volume storage (GiB) - 20480 to 102400 (100 TiB)
+    * Throughput Optimized (HDD) volume storage (GiB) - 20480 to 307200 (300 TiB)
+    * Cold (HDD) volume storage (GiB) - 20480 to 307200 (300 TiB)
+
+  * ElasticBeanstalk
+
+    * Applications - 25 to 75
+    * Application versions - 500 to 1000
+
+  * IAM
+
+    * Groups - 100 to 300
+    * Roles - 250 to 1000
+    * Instance profiles - 100 to 1000
+    * Policies - 1000 to 1500
+
+* Fix ``dev/terraform.py`` and ``dev/integration_test_iam.tf`` for integration tests.
+* Fix date and incorrect project name in some file/copyright headers.
+* `Issue #331 <https://github.com/jantman/awslimitchecker/issues/331>`_ - Change layout of the generated `Supported Limits <http://awslimitchecker.readthedocs.io/en/latest/limits.html>`_ documentation page to be more clear about which limits are supported, and include API and Trusted Advisor data in the same table as the limits and their defaults.
+
 3.0.0 (2017-12-02)
 ------------------
 

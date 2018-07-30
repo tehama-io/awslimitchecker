@@ -1,5 +1,5 @@
 """
-awslimitchecker/services/efs.py
+awslimitchecker/services/cloudtrail.py
 
 The latest version of this package is available at:
 <https://github.com/jantman/awslimitchecker>
@@ -39,20 +39,18 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 
 import abc  # noqa
 import logging
-from botocore.exceptions import EndpointConnectionError, ClientError
-from botocore.vendored.requests.exceptions import ConnectTimeout
 
 from .base import _AwsService
 from ..limit import AwsLimit
-from ..utils import paginate_dict
 
 logger = logging.getLogger(__name__)
 
 
-class _EfsService(_AwsService):
+class _CloudTrailService(_AwsService):
 
-    service_name = 'EFS'
-    api_name = 'efs'  # AWS API name to connect to (boto3.client)
+    service_name = 'CloudTrail'
+    api_name = 'cloudtrail'
+    aws_type = 'AWS::CloudTrail::Trail'
 
     def find_usage(self):
         """
@@ -61,30 +59,50 @@ class _EfsService(_AwsService):
         :py:meth:`~.AwsLimit._add_current_usage`.
         """
         logger.debug("Checking usage for service %s", self.service_name)
+
         self.connect()
         for lim in self.limits.values():
             lim._reset_usage()
-        try:
-            self._find_usage_filesystems()
-        except (EndpointConnectionError, ClientError, ConnectTimeout) as ex:
-            logger.warning(
-                'Caught exception when trying to use EFS ('
-                'perhaps the EFS service is not available in this '
-                'region?): %s', ex
-            )
+
+        self._find_usage_cloudtrail()
         self._have_usage = True
         logger.debug("Done checking usage.")
 
-    def _find_usage_filesystems(self):
-        filesystems = paginate_dict(
-            self.conn.describe_file_systems,
-            alc_marker_path=['NextMarker'],
-            alc_data_path=['FileSystems'],
-            alc_marker_param='Marker'
-        )
-        self.limits['File systems']._add_current_usage(
-            len(filesystems['FileSystems']),
-            aws_type='AWS::EFS::FileSystem',
+    def _find_usage_cloudtrail(self):
+        """Calculate current usage for CloudTrail related metrics"""
+
+        trail_list = self.conn.describe_trails()['trailList']
+        trail_count = len(trail_list) if trail_list else 0
+
+        for trail in trail_list:
+            data_resource_count = 0
+            if self.conn._client_config.region_name == trail['HomeRegion']:
+                response = self.conn.get_event_selectors(
+                    TrailName=trail['Name']
+                )
+                event_selectors = response['EventSelectors']
+                for event_selector in event_selectors:
+                    data_resource_count += len(
+                        event_selector.get('DataResources', [])
+                    )
+                self.limits['Event Selectors Per Trail']._add_current_usage(
+                    len(event_selectors),
+                    aws_type='AWS::CloudTrail::EventSelector',
+                    resource_id=trail['Name']
+                )
+                self.limits['Data Resources Per Trail']._add_current_usage(
+                    data_resource_count,
+                    aws_type='AWS::CloudTrail::DataResource',
+                    resource_id=trail['Name']
+                )
+            else:
+                logger.debug(
+                    'Ignoring event selectors and data resources for '
+                    'CloudTrail %s in non-home region' % trail['Name']
+                )
+        self.limits['Trails Per Region']._add_current_usage(
+            trail_count,
+            aws_type=self.aws_type
         )
 
     def get_limits(self):
@@ -95,17 +113,41 @@ class _EfsService(_AwsService):
         :returns: dict of limit names to :py:class:`~.AwsLimit` objects
         :rtype: dict
         """
-        if self.limits != {}:
+        logger.debug("Gathering %s's limits from AWS", self.service_name)
+
+        if self.limits:
             return self.limits
         limits = {}
-        limits['File systems'] = AwsLimit(
-            'File systems',
+
+        limits['Trails Per Region'] = AwsLimit(
+            'Trails Per Region',
             self,
-            10,
+            5,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::EFS::FileSystem',
+            limit_type=self.aws_type
         )
+
+        limits['Event Selectors Per Trail'] = AwsLimit(
+            'Event Selectors Per Trail',
+            self,
+            5,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type=self.aws_type,
+            limit_subtype='AWS::CloudTrail::EventSelector'
+        )
+
+        limits['Data Resources Per Trail'] = AwsLimit(
+            'Data Resources Per Trail',
+            self,
+            250,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type=self.aws_type,
+            limit_subtype='AWS::CloudTrail::DataResource'
+        )
+
         self.limits = limits
         return limits
 
@@ -119,5 +161,6 @@ class _EfsService(_AwsService):
         :rtype: list
         """
         return [
-            "elasticfilesystem:DescribeFileSystems",
+            "cloudtrail:DescribeTrails",
+            "cloudtrail:GetEventSelectors",
         ]

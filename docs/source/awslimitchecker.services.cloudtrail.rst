@@ -1,7 +1,7 @@
-awslimitchecker.services.apigateway module
+awslimitchecker.services.cloudtrail module
 ==========================================
 
-.. automodule:: awslimitchecker.services.apigateway
+.. automodule:: awslimitchecker.services.cloudtrail
     :members:
     :undoc-members:
     :show-inheritance:
