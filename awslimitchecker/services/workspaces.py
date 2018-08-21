@@ -72,6 +72,8 @@ class _WorkspacesService(_AwsService):
         count_value=0
         count_standard=0
         count_performance=0
+        count_power=0
+        count_graphics=0
         paginator = self.conn.get_paginator('describe_workspaces')
         iter = paginator.paginate()
         for page in iter:
@@ -83,6 +85,10 @@ class _WorkspacesService(_AwsService):
                         count_standard += 1
                     elif bundles_map[workspace['BundleId']] == 'PERFORMANCE':
                         count_performance += 1
+                    elif bundles_map[workspace['BundleId']] == 'POWER':
+                        count_power += 1
+                    elif bundles_map[workspace['BundleId']] == 'GRAPHICS':
+                        count_graphics += 1
         self.limits['VALUE']._add_current_usage(
             count_value,
             aws_type='AWS::Workspaces'
@@ -94,9 +100,17 @@ class _WorkspacesService(_AwsService):
         self.limits['PERFORMANCE']._add_current_usage(
             count_performance,
             aws_type='AWS::Workspaces'
-        ) 
+        )
+        self.limits['POWER']._add_current_usage(
+            count_power,
+            aws_type='AWS::Workspaces'
+        )
+        self.limits['GRAPHICS']._add_current_usage(
+            count_graphics,
+            aws_type='AWS::Workspaces'
+        )
 
-                
+
         self._have_usage = True
         logger.debug("Done checking usage.")
 
@@ -129,6 +143,22 @@ class _WorkspacesService(_AwsService):
         )
         limits['PERFORMANCE'] = AwsLimit(
             'PERFORMANCE',
+            self,
+            1,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type='AWS::Workspaces',
+        )
+        limits['POWER'] = AwsLimit(
+            'POWER',
+            self,
+            1,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type='AWS::Workspaces',
+        )
+        limits['GRAPHICS'] = AwsLimit(
+            'GRAPHICS',
             self,
             1,
             self.warning_threshold,
