@@ -381,6 +381,11 @@ class AwsLimit(object):
             limit = u.get_maximum() or self.get_limit()
             if limit is None:
                 continue
+            if limit == 0:
+                if usage > 0:
+                    self._criticals.append(u)
+                    all_ok = False
+                continue
             pct = (usage / (limit * 1.0)) * 100
             if crit_int is not None and usage >= crit_int:
                 self._criticals.append(u)
