@@ -69,10 +69,7 @@ class _WorkspacesService(_AwsService):
             for bundle in page['Bundles']:
                 bundles_map[bundle['BundleId']]=bundle['ComputeType']['Name']
 
-        count_value=0
-        count_standard=0
-        count_performance=0
-        count_power=0
+        count_workspaces=0
         count_graphics=0
         paginator = self.conn.get_paginator('describe_workspaces')
         iter = paginator.paginate()
@@ -80,29 +77,17 @@ class _WorkspacesService(_AwsService):
             for workspace in page['Workspaces']:
                 if workspace['BundleId'] in bundles_map:
                     if bundles_map[workspace['BundleId']] == 'VALUE':
-                        count_performance += 1
+                        count_workspaces += 1
                     elif bundles_map[workspace['BundleId']] == 'STANDARD':
-                        count_standard += 1
+                        count_workspaces += 1
                     elif bundles_map[workspace['BundleId']] == 'PERFORMANCE':
-                        count_performance += 1
+                        count_workspaces += 1
                     elif bundles_map[workspace['BundleId']] == 'POWER':
-                        count_power += 1
+                        count_workspaces += 1
                     elif bundles_map[workspace['BundleId']] == 'GRAPHICS':
                         count_graphics += 1
-        self.limits['VALUE']._add_current_usage(
-            count_value,
-            aws_type='AWS::Workspaces'
-        )
-        self.limits['STANDARD']._add_current_usage(
-            count_standard,
-            aws_type='AWS::Workspaces'
-        )
-        self.limits['PERFORMANCE']._add_current_usage(
-            count_performance,
-            aws_type='AWS::Workspaces'
-        )
-        self.limits['POWER']._add_current_usage(
-            count_power,
+        self.limits['Workspaces']._add_current_usage(
+            count_workspaces,
             aws_type='AWS::Workspaces'
         )
         self.limits['GRAPHICS']._add_current_usage(
@@ -157,10 +142,18 @@ class _WorkspacesService(_AwsService):
             self.critical_threshold,
             limit_type='AWS::Workspaces',
         )
+        limits['Workspaces'] = AwsLimit(
+            'Workspaces',
+            self,
+            1,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type='AWS::Workspaces',
+        )
         limits['GRAPHICS'] = AwsLimit(
             'GRAPHICS',
             self,
-            1,
+            0,
             self.warning_threshold,
             self.critical_threshold,
             limit_type='AWS::Workspaces',
