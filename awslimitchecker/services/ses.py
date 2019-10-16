@@ -5,7 +5,7 @@ The latest version of this package is available at:
 <https://github.com/jantman/awslimitchecker>
 
 ################################################################################
-Copyright 2015-2017 Jason Antman <jason@jasonantman.com>
+Copyright 2015-2018 Jason Antman <jason@jasonantman.com>
 
     This file is part of awslimitchecker, also known as awslimitchecker.
 
@@ -27,7 +27,7 @@ otherwise altered, except to add the Author attribution of a contributor to
 this work. (Additional Terms pursuant to Section 7b of the AGPL v3)
 ################################################################################
 While not legally required, I sincerely request that anyone who finds
-bugs please submit them at <https://github.com/jantman/pydnstest> or
+bugs please submit them at <https://github.com/jantman/awslimitchecker> or
 to me via email, and that you send any contributions or improvements
 either as a pull request on GitHub, or to me via email.
 ################################################################################
@@ -43,6 +43,7 @@ import logging
 from .base import _AwsService
 from ..limit import AwsLimit
 from botocore.exceptions import EndpointConnectionError
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +66,13 @@ class _SesService(_AwsService):
             self.connect()
             resp = self.conn.get_send_quota()
         except EndpointConnectionError as ex:
-            logger.warn('Skipping SES: %s', str(ex))
+            logger.warning('Skipping SES: %s', str(ex))
             return
+        except ClientError as ex:
+            if ex.response['Error']['Code'] in ['AccessDenied', '503']:
+                logger.warning('Skipping SES: %s', ex)
+                return
+            raise
         self.limits['Daily sending quota']._add_current_usage(
             resp['SentLast24Hours']
         )
@@ -104,8 +110,13 @@ class _SesService(_AwsService):
             self.connect()
             resp = self.conn.get_send_quota()
         except EndpointConnectionError as ex:
-            logger.warn('Skipping SES: %s', str(ex))
+            logger.warning('Skipping SES: %s', str(ex))
             return
+        except ClientError as ex:
+            if ex.response['Error']['Code'] in ['AccessDenied', '503']:
+                logger.warning('Skipping SES: %s', ex)
+                return
+            raise
         self.limits['Daily sending quota']._set_api_limit(resp['Max24HourSend'])
 
     def required_iam_permissions(self):

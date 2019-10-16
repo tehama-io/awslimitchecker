@@ -61,6 +61,8 @@ target/
 bin/
 include/
 
+# IntelliJ
+*.iml
 .idea/
 
 dev/.terraform
@@ -68,3 +70,5 @@ dev/iam_policy.json
 dev/terraform.tfstate.backup
 results/
 .release_position.json
+dev/terraform.tfstate
+man/

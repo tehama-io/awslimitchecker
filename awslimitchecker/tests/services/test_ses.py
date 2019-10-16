@@ -5,7 +5,7 @@ The latest version of this package is available at:
 <https://github.com/jantman/awslimitchecker>
 
 ################################################################################
-Copyright 2015-2017 Jason Antman <jason@jasonantman.com>
+Copyright 2015-2018 Jason Antman <jason@jasonantman.com>
 
     This file is part of awslimitchecker, also known as awslimitchecker.
 
@@ -27,7 +27,7 @@ otherwise altered, except to add the Author attribution of a contributor to
 this work. (Additional Terms pursuant to Section 7b of the AGPL v3)
 ################################################################################
 While not legally required, I sincerely request that anyone who finds
-bugs please submit them at <https://github.com/jantman/pydnstest> or
+bugs please submit them at <https://github.com/jantman/awslimitchecker> or
 to me via email, and that you send any contributions or improvements
 either as a pull request on GitHub, or to me via email.
 ################################################################################
@@ -38,8 +38,9 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 """
 
 import sys
+import pytest
 from awslimitchecker.services.ses import _SesService
-from botocore.exceptions import EndpointConnectionError
+from botocore.exceptions import ClientError, EndpointConnectionError
 
 # https://code.google.com/p/mock/issues/detail?id=249
 # py>=3.4 should use unittest.mock not the mock package on pypi
@@ -125,10 +126,118 @@ class Test_SesService(object):
         assert cls._have_usage is False
         assert mock_logger.mock_calls == [
             call.debug('Checking usage for service %s', 'SES'),
-            call.warn(
+            call.warning(
                 'Skipping SES: %s',
                 'Could not connect to the endpoint URL: "myurl"'
             )
+        ]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert len(cls.limits['Daily sending quota'].get_current_usage()) == 0
+
+    def test_find_usage_invalid_region_client_error(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 400,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Unknown',
+                'Code': 'AccessDenied',
+                'Type': 'Sender'
+            }
+        }
+        ce = ClientError(resp, 'GetSendQuota')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                assert cls._have_usage is False
+                cls.find_usage()
+        assert mock_connect.mock_calls == [call()]
+        assert cls._have_usage is False
+        assert mock_logger.mock_calls == [
+            call.debug('Checking usage for service %s', 'SES'),
+            call.warning(
+                'Skipping SES: %s', ce
+            )
+        ]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert len(cls.limits['Daily sending quota'].get_current_usage()) == 0
+
+    def test_find_usage_invalid_region_503(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 503,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Service Unavailable',
+                'Code': '503'
+            }
+        }
+        ce = ClientError(resp, 'GetSendQuota')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                assert cls._have_usage is False
+                cls.find_usage()
+        assert mock_connect.mock_calls == [call()]
+        assert cls._have_usage is False
+        assert mock_logger.mock_calls == [
+            call.debug('Checking usage for service %s', 'SES'),
+            call.warning(
+                'Skipping SES: %s', ce
+            )
+        ]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert len(cls.limits['Daily sending quota'].get_current_usage()) == 0
+
+    def test_find_usage_other_client_error(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 400,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Not Unknown',
+                'Code': 'NotAccessDenied',
+                'Type': 'Sender'
+            }
+        }
+        ce = ClientError(resp, 'operation')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                assert cls._have_usage is False
+                with pytest.raises(ClientError):
+                    cls.find_usage()
+        assert mock_connect.mock_calls == [call()]
+        assert cls._have_usage is False
+        assert mock_logger.mock_calls == [
+            call.debug('Checking usage for service %s', 'SES')
         ]
         assert mock_conn.mock_calls == [call.get_send_quota()]
         assert len(cls.limits['Daily sending quota'].get_current_usage()) == 0
@@ -164,11 +273,105 @@ class Test_SesService(object):
         assert mock_connect.mock_calls == [call()]
         assert mock_conn.mock_calls == [call.get_send_quota()]
         assert mock_logger.mock_calls == [
-            call.warn(
+            call.warning(
                 'Skipping SES: %s',
                 'Could not connect to the endpoint URL: "myurl"'
             )
         ]
+        assert cls.limits['Daily sending quota'].api_limit is None
+
+    def test_update_limits_from_api_invalid_region_client_error(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 400,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Unknown',
+                'Code': 'AccessDenied',
+                'Type': 'Sender'
+            }
+        }
+        ce = ClientError(resp, 'GetSendQuota')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                cls._update_limits_from_api()
+        assert mock_connect.mock_calls == [call()]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert mock_logger.mock_calls == [
+            call.warning('Skipping SES: %s', ce)
+        ]
+        assert cls.limits['Daily sending quota'].api_limit is None
+
+    def test_update_limits_from_api_invalid_region_503(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 503,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Service Unavailable',
+                'Code': '503'
+            }
+        }
+        ce = ClientError(resp, 'GetSendQuota')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                cls._update_limits_from_api()
+        assert mock_connect.mock_calls == [call()]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert mock_logger.mock_calls == [
+            call.warning('Skipping SES: %s', ce)
+        ]
+        assert cls.limits['Daily sending quota'].api_limit is None
+
+    def test_update_limits_from_api_other_client_error(self):
+        resp = {
+            'ResponseMetadata': {
+                'HTTPStatusCode': 400,
+                'RequestId': '7d74c6f0-c789-11e5-82fe-a96cdaa6d564'
+            },
+            'Error': {
+                'Message': 'Not Unknown',
+                'Code': 'NotAccessDenied',
+                'Type': 'Sender'
+            }
+        }
+        ce = ClientError(resp, 'GetSendQuota')
+
+        def se_get():
+            raise ce
+
+        mock_conn = Mock()
+        mock_conn.get_send_quota.side_effect = se_get
+
+        with patch('%s.connect' % pb) as mock_connect:
+            with patch('%s.logger' % pbm) as mock_logger:
+                cls = _SesService(21, 43)
+                cls.conn = mock_conn
+                with pytest.raises(ClientError):
+                    cls._update_limits_from_api()
+        assert mock_connect.mock_calls == [call()]
+        assert mock_conn.mock_calls == [call.get_send_quota()]
+        assert mock_logger.mock_calls == []
         assert cls.limits['Daily sending quota'].api_limit is None
 
     def test_required_iam_permissions(self):

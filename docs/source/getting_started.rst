@@ -57,7 +57,7 @@ Threshold
 Requirements
 ------------
 
-* Python 2.6, 2.7, 3.3+.
+* Python 2.7 or 3.4+. Python 2.6 and 3.3 are no longer supported.
 * Python `VirtualEnv <http://www.virtualenv.org/>`_ and ``pip`` (recommended installation method; your OS/distribution should have packages for these)
 * `boto3 <http://boto3.readthedocs.org/>`_ >= 1.4.6 and its dependency `botocore <https://botocore.readthedocs.io/en/latest/>`_ >= 1.6.0.
 
@@ -148,7 +148,7 @@ Trusted Advisor
 
 awslimitchecker supports retrieving your current service limits via the
 `Trusted Advisor <https://aws.amazon.com/premiumsupport/trustedadvisor/>`_
-`"Service Limits" performance check <https://aws.amazon.com/premiumsupport/trustedadvisor/best-practices/#performance>`_
+`"Service Limits" performance check <https://aws.amazon.com/premiumsupport/trustedadvisor/best-practices/#Performance>`_
 , for limits which Trusted Advisor tracks (currently a subset of what awslimitchecker
 knows about). The results of this check may not be available via the API for all
 accounts; as of December 2016, the Trusted Advisor documentation states that while

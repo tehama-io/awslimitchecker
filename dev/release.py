@@ -54,9 +54,10 @@ from release_utils import (
     StepRegistry, prompt_user, BaseStep, fail, is_git_dirty, TravisChecker
 )
 from awslimitchecker.version import _VERSION as VERSION
+from update_integration_iam_policy import IntegrationIamPolicyUpdater
 
-if sys.version_info[0:2] != (3, 6):
-    raise SystemExit('ERROR: release.py can only run under py 3.6')
+if sys.version_info[0:2] < (3, 6):
+    raise SystemExit('ERROR: release.py can only run under py 3.6+')
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(name)s.%(funcName)s() ] " \
          "%(message)s"
@@ -131,25 +132,11 @@ class RunToxLocaldocs(BaseStep):
 
 
 @steps.register(3)
-class RunDevTerraform(BaseStep):
+class RunDevUpdateIntegrationIamPolicy(BaseStep):
 
     def run(self):
-        projdir = self.projdir
-        env = deepcopy(os.environ)
-        env['PATH'] = self._fixed_path(projdir)
-        cmd = os.path.join(projdir, 'dev', 'terraform.py')
-        logger.info('Running %s in cwd %s', cmd, projdir)
-        res = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            cwd=projdir
-        )
-        logger.info('dev/terraform.py process exited %d', res.returncode)
-        if res.returncode != 0:
-            logger.error('ERROR: terraform exitcode %d', res.returncode)
-            logger.error(
-                'dev/terraform.py output:\n%s', res.stdout.decode()
-            )
-            res.check_returncode()
+        logger.info('Running dev/update_integration_iam_policy.py')
+        IntegrationIamPolicyUpdater().run()
         self._ensure_committed()
         if not prompt_user(
                 'Are any IAM permission changes clearly documented in the '
