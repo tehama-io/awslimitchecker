@@ -23,6 +23,8 @@ What It Does
   an optional maximum time limit). See
   :ref:`Getting Started - Trusted Advisor <getting_started.trusted_advisor>`
   for more information.
+- Optionally send current usage and limit metrics to a :ref:`metrics store <cli_usage.metrics>` such as Datadog.
+- Optionally send warning/critical alerts to an :ref:`alert provider <cli_usage.alerts>`, such as PagerDuty.
 
 .. _getting_started.nomenclature:
 
@@ -57,18 +59,22 @@ Threshold
 Requirements
 ------------
 
+**Either Docker in order to run via the** :ref:`docker image <docker>`, **or:**
+
 * Python 2.7 or 3.4+. Python 2.6 and 3.3 are no longer supported.
 * Python `VirtualEnv <http://www.virtualenv.org/>`_ and ``pip`` (recommended installation method; your OS/distribution should have packages for these)
 * `boto3 <http://boto3.readthedocs.org/>`_ >= 1.4.6 and its dependency `botocore <https://botocore.readthedocs.io/en/latest/>`_ >= 1.6.0.
-
 
 .. _getting_started.installing:
 
 Installing
 ----------
 
-It's recommended that you install into a virtual environment (virtualenv /
-venv). See the `virtualenv usage documentation <http://www.virtualenv.org/>`_
+awslimitchecker now distributes an official Docker image, which removes the need
+to install locally. If you wish to run via this method, please see :ref:`docker`.
+
+If not running via Docker, it's recommended that you install into a virtual environment
+(virtualenv / venv). See the `virtualenv usage documentation <http://www.virtualenv.org/>`_
 for more details, but the gist is as follows (the virtualenv name, "limitchecker" here,
 can be whatever you want):
 
@@ -203,6 +209,9 @@ information on the implementation of Trusted Advisor polling.
 
 Required Permissions
 --------------------
+
+.. important::
+   The required IAM policy output by awslimitchecker includes only the permissions required to check limits and usage. If you are loading :ref:`limit overrides <cli_usage.limit_overrides>` and/or :ref:`threshold overrides <cli_usage.threshold_overrides>` from S3, you will need to run awslimitchecker with additional permissions to access those objects.
 
 You can view a sample IAM policy listing the permissions required for awslimitchecker to function properly
 either via the CLI client:

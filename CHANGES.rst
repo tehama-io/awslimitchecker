@@ -1,6 +1,33 @@
 Changelog
 =========
 
+7.1.0 (2019-09-10)
+------------------
+
+* `Issue #301 <https://github.com/jantman/awslimitchecker/issues/301>`__ - Distribute an official Docker image for awslimitchecker.
+* `Issue #421 <https://github.com/jantman/awslimitchecker/issues/421>`__
+
+  * Stop referencing deprecated ``botocore.vendored.requests.exceptions.ConnectTimeout`` in favor of new, and higher-level, ``botocore.exceptions.ConnectionError``
+  * In :py:meth:`awslimitchecker.utils._get_latest_version`, replace use of ``botocore.vendored.requests`` with ``urllib3``.
+
+* `Issue #324 <https://github.com/jantman/awslimitchecker/issues/324>`__ - Support loading :ref:`limit overrides <cli_usage.limit_overrides>` and/or :ref:`threshold overrides <cli_usage.threshold_overrides>` from a JSON file either stored locally or in S3 via new ``--limit-override-json`` and ``--threshold-override-json`` CLI options.
+* `Issue #418 <https://github.com/jantman/awslimitchecker/issues/418>`__ - Add support for sending runtime, limits, and usage to :ref:`<metric providers <cli_usage.metrics>` such as Datadog.
+* `Issue #419 <https://github.com/jantman/awslimitchecker/issues/419>`__ - Add support for alerts/notifications of thresholds crossed or failed runs (exceptions) via :ref:`<alert providers <cli_usage.alerts>` such as PagerDuty.
+
+7.0.0 (2019-08-13)
+------------------
+
+This release **removes one limit and adds two new limits**!
+
+* `Issue #412 <https://github.com/jantman/awslimitchecker/issues/412>`__ / `PR #414 <https://github.com/jantman/awslimitchecker/pull/414>`__ - Since some time in June 2019, the former ``ELB`` Service ``Active load balancers`` limit is now two separate limits, ``Classic load balancers`` and ``Application load balancers``. **Anyone who was using the "Active load balancers" limit name (e.g. in overrides or custom code) must update their code accordingly.** This release removes the ``Active load balancers`` limit and adds two new limits, ``Classic load balancers`` and ``Application load balancers``, to match how AWS now calculates and exposes these limits.
+* `Issue #410 <https://github.com/jantman/awslimitchecker/issues/410>`__ - Documentation fix for missing Trusted Advisor information on Limits page.
+* Fix some test failures related to exception objects in pytest 5.0.0.
+
+6.1.7 (2019-05-17)
+------------------
+
+* `Issue #406 <https://github.com/jantman/awslimitchecker/issues/406>`__ - Fix for unhandled exception when a Trusted Advisor check has a ``null`` timestamp.
+
 6.1.6 (2019-04-19)
 ------------------
 
