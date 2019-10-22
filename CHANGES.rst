@@ -1,6 +1,109 @@
 Changelog
 =========
 
+7.1.0 (2019-09-10)
+------------------
+
+* `Issue #301 <https://github.com/jantman/awslimitchecker/issues/301>`__ - Distribute an official Docker image for awslimitchecker.
+* `Issue #421 <https://github.com/jantman/awslimitchecker/issues/421>`__
+
+  * Stop referencing deprecated ``botocore.vendored.requests.exceptions.ConnectTimeout`` in favor of new, and higher-level, ``botocore.exceptions.ConnectionError``
+  * In :py:meth:`awslimitchecker.utils._get_latest_version`, replace use of ``botocore.vendored.requests`` with ``urllib3``.
+
+* `Issue #324 <https://github.com/jantman/awslimitchecker/issues/324>`__ - Support loading :ref:`limit overrides <cli_usage.limit_overrides>` and/or :ref:`threshold overrides <cli_usage.threshold_overrides>` from a JSON file either stored locally or in S3 via new ``--limit-override-json`` and ``--threshold-override-json`` CLI options.
+* `Issue #418 <https://github.com/jantman/awslimitchecker/issues/418>`__ - Add support for sending runtime, limits, and usage to :ref:`<metric providers <cli_usage.metrics>` such as Datadog.
+* `Issue #419 <https://github.com/jantman/awslimitchecker/issues/419>`__ - Add support for alerts/notifications of thresholds crossed or failed runs (exceptions) via :ref:`<alert providers <cli_usage.alerts>` such as PagerDuty.
+
+7.0.0 (2019-08-13)
+------------------
+
+This release **removes one limit and adds two new limits**!
+
+* `Issue #412 <https://github.com/jantman/awslimitchecker/issues/412>`__ / `PR #414 <https://github.com/jantman/awslimitchecker/pull/414>`__ - Since some time in June 2019, the former ``ELB`` Service ``Active load balancers`` limit is now two separate limits, ``Classic load balancers`` and ``Application load balancers``. **Anyone who was using the "Active load balancers" limit name (e.g. in overrides or custom code) must update their code accordingly.** This release removes the ``Active load balancers`` limit and adds two new limits, ``Classic load balancers`` and ``Application load balancers``, to match how AWS now calculates and exposes these limits.
+* `Issue #410 <https://github.com/jantman/awslimitchecker/issues/410>`__ - Documentation fix for missing Trusted Advisor information on Limits page.
+* Fix some test failures related to exception objects in pytest 5.0.0.
+
+6.1.7 (2019-05-17)
+------------------
+
+* `Issue #406 <https://github.com/jantman/awslimitchecker/issues/406>`__ - Fix for unhandled exception when a Trusted Advisor check has a ``null`` timestamp.
+
+6.1.6 (2019-04-19)
+------------------
+
+* `PR #402 <https://github.com/jantman/awslimitchecker/pull/402>`__ - Add ``--skip-check`` command line option for ignoring specific checks based on service and check name. Thanks to `@ddelnano <https://github.com/ddelnano>`__.
+
+6.1.5 (2019-03-06)
+------------------
+
+* `Issue #397 <https://github.com/jantman/awslimitchecker/issues/397>`__ - Fix unhandled exception checking SES in some regions. `Issue #375 <https://github.com/jantman/awslimitchecker/issues/375>`__ in 6.0.1 handled an uncaught ``ClientError`` when checking SES in some regions, but some regions such as ap-southeast-2 are now returning a 503 Service Unavailable for SES instead. Handle this case as well. Thanks to `@TimGebert <https://github.com/TimGebert>`__ for reporting the issue and `bergkampsliew <https://github.com/bergkampsliew>`__ for verifying.
+
+6.1.4 (2019-03-01)
+------------------
+
+* `PR #394 <https://github.com/jantman/awslimitchecker/pull/394>`_ - Fix bug in calculation of VPC "Network interfaces per Region" limit, added in 6.1.0 (`PR #379 <https://github.com/jantman/awslimitchecker/pull/379>`__), that resulted in reporting the limit 5x lower than it actually is in some cases. Thanks to `@TimGebert <https://github.com/TimGebert>`__.
+
+6.1.3 (2019-02-26)
+------------------
+
+* `PR #391 <https://github.com/jantman/awslimitchecker/pull/391>`_ / `Issue #390 <https://github.com/jantman/awslimitchecker/issues/390>`_ - Update for some recently-increased DynamoDB and EFS default limits. Thanks to `bergkampsliew <https://github.com/bergkampsliew>`__.
+
+6.1.2 (2019-02-19)
+------------------
+
+* `PR #387 <https://github.com/jantman/awslimitchecker/pull/387>`_ - Fix bug in calculation of VPC "Network interfaces per Region" limit, added in 6.1.0 (`PR #379 <https://github.com/jantman/awslimitchecker/pull/379>`__). Thanks to `@nadlerjessie <https://github.com/nadlerjessie>`__.
+
+6.1.1 (2019-02-15)
+------------------
+
+* `PR #381 <https://github.com/jantman/awslimitchecker/pull/381>`_ / `Issue #382 <https://github.com/jantman/awslimitchecker/issues/382>`_ - Revised fix for `Issue #375 <https://github.com/jantman/awslimitchecker/issues/375>`__, uncaught ``ClientError`` exception when checking SES Send Quota in certain regions. Thanks to `bergkampsliew <https://github.com/bergkampsliew>`__.
+
+6.1.0 (2019-01-30)
+------------------
+
+* `PR #379 <https://github.com/jantman/awslimitchecker/pull/379>`__ - Add support for EC2/VPC ``Network interfaces per Region`` limit. Thanks to `@nadlerjessie <https://github.com/nadlerjessie>`__.
+
+6.0.1 (2019-01-27)
+------------------
+
+* `Issue #375 <https://github.com/jantman/awslimitchecker/issues/375>`__ - Fix uncaught ``ClientError`` exception when checking SES Send Quota in certain regions. Thanks to `bergkampsliew <https://github.com/bergkampsliew>`__ for `PR #376 <https://github.com/jantman/awslimitchecker/pull/376>`_.
+
+6.0.0 (2019-01-01)
+------------------
+
+This release **requires new IAM permissions**:
+
+* ``lambda:GetAccountSettings``
+
+**Important:** This release removes the ApiGateway ``APIs per account`` limit in favor of more-specific limits; see below.
+
+* `Issue #363 <https://github.com/jantman/awslimitchecker/issues/363>`_ - Add support for the Lambda limits and usages.
+* Clarify support for "unlimited" limits (limits where :py:meth:`awslimitchecker.limit.AwsLimit.get_limit` returns ``None``).
+* Add support for 26 new EC2 instance types.
+* Update default limits for ECS service.
+* ``ApiGateway`` service now has three ReST API limits (``Regional API keys per account``, ``Private API keys per account``, and ``Edge API keys per account``) in place of the previous single ``APIs per account`` to reflect the current documented service limits.
+* API Gateway service - add support for ``VPC Links per account`` limit.
+* Add support for Network Load Balancer limits ``Network load balancers`` and ``Listeners per network load balancer``.
+* Add support for Application Load Balancer limits ``Certificates per application load balancer``.
+* Add support for Classic ELB (ELBv1) ``Registered instances per load balancer`` limit.
+* Rename ``dev/terraform.py`` to ``dev/update_integration_iam_policy.py`` and move from using terraform to manage integration test IAM policy to pure Python.
+
+* Note that I've left out the ``Targets per application load balancer`` and ``Targets per network load balancer`` limits. Checking usage for these requires iterating over ``DescribeTargetHealth`` for each target group, so I've opted to leave it out at this time for performance reasons and because I'd guess that the number of people with 500 or 1000 targets per LB is rather small. Please open an issue if you'd like to see usage calculation for these limits.
+
+Important Note on Limit Values
+++++++++++++++++++++++++++++++
+
+awslimitchecker has had documented support for Limits that are unlimited/"infinite" since 0.5.0 by returning ``None`` from :py:meth:`awslimitchecker.limit.AwsLimit.get_limit`. Until now, that edge case was only triggered when Trusted Advisor returned "Unlimited" for a limit. It will now also be returned for the Lambda service's ``Function Count`` Limit. Please be aware of this if you're using the Python API and assuming Limit values are all numeric.
+
+If you are relying on the output format of the command line ``awslimitchecker`` script, please use the Python API instead.
+
+5.1.0 (2018-09-23)
+------------------
+
+* `Issue #358 <https://github.com/jantman/awslimitchecker/issues/358>`_ - Update EFS with new default limit for number of File systems: 70 in us-east-1 and 125 in other regions.
+* `PR #359 <https://github.com/jantman/awslimitchecker/pull/359>`_ - Add support for ``t3`` EC2 instance types (thanks to `chafouin <https://github.com/chafouin>`_).
+* Switch ``py37`` TravisCI tests from py37-dev to py37 (release).
+
 5.0.0 (2018-07-30)
 ------------------
 
