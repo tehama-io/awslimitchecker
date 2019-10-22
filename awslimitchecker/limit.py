@@ -68,7 +68,7 @@ class AwsLimit(object):
           this limit is for
         :type service: :py:class:`~._AwsService`
         :param default_limit: the default value of this limit for new accounts
-        :type default_limit: int
+        :type default_limit: :py:obj:`int`, or ``None`` if unlimited
         :param def_warning_threshold: the default warning threshold, as an
           integer percentage.
         :type def_warning_threshold: int
@@ -380,6 +380,11 @@ class AwsLimit(object):
             usage = u.get_value()
             limit = u.get_maximum() or self.get_limit()
             if limit is None:
+                continue
+            if limit == 0:
+                if usage > 0:
+                    self._criticals.append(u)
+                    all_ok = False
                 continue
             pct = (usage / (limit * 1.0)) * 100
             if crit_int is not None and usage >= crit_int:
