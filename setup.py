@@ -40,21 +40,25 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 from setuptools import setup, find_packages
 from awslimitchecker.version import _VERSION, _PROJECT_URL
 
+# Requires was
+#        'python-dateutil>=2.4.2',
+# Pegging to 2.8.0 until https://github.com/boto/botocore/issues/1872 solved
+
 with open('README.rst') as file:
     long_description = file.read()
 
 requires = [
-    'boto3>=1.4.6',
-    'botocore>=1.6.0',
+    'boto3>=1.9.175',
+    'botocore>=1.12.175',
     'termcolor>=1.1.0',
-    'python-dateutil>=2.4.2',
+    'python-dateutil==2.8.0',
     'versionfinder>=0.1.1',
     'pytz',
     'urllib3'
 ]
 
 classifiers = [
-    'Development Status :: 4 - Beta',
+    'Development Status :: 6 - Mature',
     'Environment :: Console',
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
@@ -63,13 +67,11 @@ classifiers = [
     'Natural Language :: English',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.4',
     'Programming Language :: Python :: 3.5',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
     'Topic :: Internet',
     'Topic :: System :: Monitoring',
 ]
