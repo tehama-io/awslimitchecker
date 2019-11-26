@@ -62,13 +62,24 @@ class _WorkspacesService(_AwsService):
         for lim in self.limits.values():
             lim._reset_usage()
 
+        # Workspace bundles count
+        count_bundles=0
         bundles_map={}
         paginator = self.conn.get_paginator('describe_workspace_bundles')
         iter = paginator.paginate()
         for page in iter:
+            # Need the bundle information to determine workspace type
             for bundle in page['Bundles']:
                 bundles_map[bundle['BundleId']]=bundle['ComputeType']['Name']
+            # But also can count bundles
+            count_bundles += 1
 
+        self.limits['Bundles']._add_current_usage(
+            count_bundles,
+            aws_type='AWS::Workspaces'
+        )
+
+        # Workspaces and Graphics Workspaces Counts
         count_workspaces=0
         count_graphics=0
         paginator = self.conn.get_paginator('describe_workspaces')
@@ -95,6 +106,18 @@ class _WorkspacesService(_AwsService):
             aws_type='AWS::Workspaces'
         )
 
+        # Workspace Images Count
+        count_images=0
+        paginator = self.conn.get_paginator('describe_workspace_images')
+        iter = paginator.paginate()
+        for page in iter:
+            for image in page['Images']:
+                count_images += 1
+
+        self.limits['Images']._add_current_usage(
+            count_images,
+            aws_type='AWS::Workspaces'
+        )
 
         self._have_usage = True
         logger.debug("Done checking usage.")
@@ -154,6 +177,22 @@ class _WorkspacesService(_AwsService):
             'GRAPHICS',
             self,
             0,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type='AWS::Workspaces',
+        )
+        limits['Images'] = AwsLimit(
+            'Images',
+            self,
+            15,
+            self.warning_threshold,
+            self.critical_threshold,
+            limit_type='AWS::Workspaces',
+        )
+        limits['Bundles'] = AwsLimit(
+            'Bundles',
+            self,
+            15,
             self.warning_threshold,
             self.critical_threshold,
             limit_type='AWS::Workspaces',
