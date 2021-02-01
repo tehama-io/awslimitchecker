@@ -71,8 +71,8 @@ class _WorkspacesService(_AwsService):
             # Need the bundle information to determine workspace type
             for bundle in page['Bundles']:
                 bundles_map[bundle['BundleId']]=bundle['ComputeType']['Name']
-            # But also can count bundles
-            count_bundles += 1
+                # But also can count bundles
+                count_bundles += 1
 
         self.limits['Bundles']._add_current_usage(
             count_bundles,
