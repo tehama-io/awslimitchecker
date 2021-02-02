@@ -1,6 +1,104 @@
 Changelog
 =========
 
+.. _changelog.10_0_0:
+
+10.0.0 (2020-12-07)
+-------------------
+
+IMPORTANT - Breaking Changes
+++++++++++++++++++++++++++++
+
+* This release makes significant changes to how Trusted Advisor is used; see below.
+* This release requires the following new IAM permissions: ``eks:ListClusters``, ``eks:DescribeCluster``, ``eks:ListNodegroups``, ``eks:ListFargateProfiles``, ``eks:DescribeFargateProfile``, ``kinesis:DescribeLimits``.
+* This release introduces a number of new limits, as well as new services. Please see below for details.
+* This release **removes** the ``EC2/Security groups per VPC`` limit, which no longer exists, and adds the new ``EC2/VPC security groups per Region`` limit.
+
+All Changes
++++++++++++
+
+* `Issue #466 <https://github.com/jantman/awslimitchecker/issues/466>`__ - **Significant** changes to Trusted Advisor support.
+
+  * In June 2019, AWS `announced <https://aws.amazon.com/about-aws/whats-new/2019/06/introducing-service-quotas-view-and-manage-quotas-for-aws-services-from-one-location/>`__ the new Service Quotas service (great name) that allows us to retrieve limit/quota information from a unified API. In addition, many individual services now provide limit information via their own APIs. At this point (late 2020) all of the limit/quota information that was previously available via Trusted Advisor is now available via a combination of the individual service APIs and Service Quotas.
+  * In February 2020, the layout of Trusted Advisor checks was changed, and the "Performance / Service Limits" check that we previously used to obtain limit information was moved to its own category in Trusted Advisor. While I can't confirm this, as far as I can tell, this change was only made in the standard AWS regions/partitions (i.e. not GovCloud or China).
+  * awslimitchecker still has not been updated for this new Trusted Advisor layout.
+  * This release **disables Trusted Advisor by default outside China and GovCloud**, as it provides no additional information outside of these regions/partitions.
+  * If you are running in China or GovCloud and have issues with awslimitchecker retrieving information from Trusted Advisor, please `open an issue <https://github.com/jantman/awslimitchecker/issues>`__.
+  * My current intent is to leave Trusted Advisor support in this state until Service Quotas is available in China and GovCloud, at which point I plan on completely removing all Trusted Advisor support.
+* Migrate CI builds from travis-ci.org to travis-ci.com.
+* `Issue #503 <https://github.com/jantman/awslimitchecker/issues/503>`__ - Fix ``Units set to "None"`` error when retrieving load balancer data from Service Quotas. We now allow the (A|E)LB per Region quota with a unit of either "Count" (prior to November 2020) or "None" (November 2020 on).
+* `Issue #489 <https://github.com/jantman/awslimitchecker/issues/489>`__ / `PR #490 <https://github.com/jantman/awslimitchecker/pull/490>`__ - Add missing RDS limits: ``Manual Cluster Snapshots``, ``Custom Endpoints Per DB Cluster``, ``DB Instance Roles``, and ``DB Cluster Roles``. Thanks to `sebasrp <https://github.com/sebasrp>`__ for this contribution!
+* `Issue #472 <https://github.com/jantman/awslimitchecker/issues/472>`__ / `PR #494 <https://github.com/jantman/awslimitchecker/pull/494>`__ - Add support for the ``EKS`` service, and 8 new limits for it. Thanks to `sebasrp <https://github.com/sebasrp>`__ for this contribution!
+* `Issue #495 <https://github.com/jantman/awslimitchecker/issues/495>`__ / `PR #496 <https://github.com/jantman/awslimitchecker/pull/496>`__ - Add support for the ``Kinesis`` service, and one new limit for it. Thanks to `sebasrp <https://github.com/sebasrp>`__ for this contribution!
+* `PR #499 <https://github.com/jantman/awslimitchecker/pull/499>`__ - Set quota_name for VPC "Entries per route table" limit, so that the current limit will be automatically retrieved from Service Quotas. Thanks to `patuck <https://github.com/patuck>`__ for this contribution!
+* `Issue #498 <https://github.com/jantman/awslimitchecker/issues/498>`__ - Fix multiple issues relating to VPC limits:
+
+  * Update the EC2 / ``Rules per VPC security group`` limit to support retrieving the current limit value from Service Quotas.
+  * Remove the ``EC2/Security groups per VPC`` limit, which no longer exists.
+  * Add the new ``EC2/VPC security groups per Region`` limit.
+
+* `Issue #501 <https://github.com/jantman/awslimitchecker/issues/501>`__ - Update ``VPC/Network interfaces per Region`` limit for new calculation method.
+* `Issue #488 <https://github.com/jantman/awslimitchecker/issues/488>`__ / `PR #491 <https://github.com/jantman/awslimitchecker/pull/491>`__ - Update new ElastiCache default limits. Thanks to `sebasrp <https://github.com/sebasrp>`__ for this contribution!
+
+.. _changelog.9_0_0:
+
+9.0.0 (2020-09-22)
+------------------
+
+**Important:** This release requires new IAM permissions: ``sts:GetCallerIdentity`` and ``cloudwatch:GetMetricData``
+
+**Important:** This release includes updates for major changes to ECS limits, which includes the renaming of some existing limits.
+
+* `Issue #477 <https://github.com/jantman/awslimitchecker/issues/477>`__ - EC2 instances running on Dedicated Hosts (tenancy "host") or single-tenant hardware (tenancy "dedicated") do not count towards On-Demand Instances limits. They were previously being counted towards these limits; they are now excluded from the count. Thanks to `pritam2277 <https://github.com/pritam2277>`__ for reporting this issue and providing details and test data.
+* `Issue #477 <https://github.com/jantman/awslimitchecker/issues/477>`__ - For all VPC resources that support the ``owner-id`` filter, supply that filter when describing them, set to the current account ID. This will prevent shared resources from other accounts from being counted against the limits. Thanks to `pritam2277 <https://github.com/pritam2277>`__ for reporting this issue and providing details and test data.
+* `Issue #475 <https://github.com/jantman/awslimitchecker/issues/475>`__ - When an Alert Provider is used, only exit non-zero if an exception is encountered. Exit zero even if there are warnings and/or criticals. Thanks to `varuzam <https://github.com/varuzam>`__ for this feature request.
+* `Issue #467 <https://github.com/jantman/awslimitchecker/issues/467>`__ - Fix the Service Quotas quota name for VPC "NAT Gateways per AZ" limit. Thanks to `xRokco <https://github.com/xRokco>`__ for reporting this issue, as well as the required fix.
+* `Issue #457 <https://github.com/jantman/awslimitchecker/issues/457>`__ - In the required IAM permissions, replace ``support:*`` with the specific permissions that we need.
+* `Issue #463 <https://github.com/jantman/awslimitchecker/issues/463>`__ - Updates for the major changes to ECS limits `in August 2020 <https://github.com/awsdocs/amazon-ecs-developer-guide/commit/3ba9bc24b3f667557f43a49b9001fea3538311ad#diff-d98743b56c4036e0baeb5e15901d2a73>`__. Thanks to `vincentclee <https://github.com/vincentclee>`__ for reporting this issue.
+
+  * The ``EC2 Tasks per Service (desired count)`` limit has been replaced with ``Tasks per service``, which measures the desired count of tasks of all launch types (EC2 or Fargate). The default value of this limit has increased from 1000 to 2000.
+  * The default of ``Clusters`` has increased from 2,000 to 10,000.
+  * The default of ``Services per Cluster`` has increased from 1,000 to 2,000.
+  * The ``Fargate Tasks`` limit has been removed.
+  * The ``Fargate On-Demand resource count`` limit has been added, with a default quota value of 500. This limit measures the number of ECS tasks and EKS pods running concurrently on Fargate. The current usage for this metric is obtained from CloudWatch.
+  * The ``Fargate Spot resource count`` limit has been added, with a default quota value of 500. This limit measures the number of ECS tasks running concurrently on Fargate Spot. The current usage for this metric is obtained from CloudWatch.
+
+* Add internal helper method to :py:class:`~._AwsService` to get Service Quotas usage information from CloudWatch.
+
+.. _changelog.8_1_0:
+
+8.1.0 (2020-09-18)
+------------------
+
+* `PR #468 <https://github.com/jantman/awslimitchecker/pull/468>`_ - Fix transposed headings in CLI Usage documentation. Thanks to `@owenmann <https://github.com/owenmann>`__.
+* `PR #470 <https://github.com/jantman/awslimitchecker/pull/470>`_ - Fix new EBS "Active snapshots" limit (bumped from 10,000 to 100,000) and Quotas Service name. Thanks to `@rashidamiri <https://github.com/rashidamiri>`__.
+* `Issue #464 <https://github.com/jantman/awslimitchecker/issues/464>`_ - Fix bug where SES was causing ``ConnectTimeoutError`` in some regions. This has been added to the list of SES exceptions that we catch and silently ignore. This is a new exception thrown by regions that do not have SES support.
+* Add ``.dockerignore`` file to make local builds quite a bit smaller.
+* `Issue #465 <https://github.com/jantman/awslimitchecker/issues/465>`_ - Fixed via `versionfinder 1.1.1 <https://github.com/jantman/versionfinder/pull/13>`_.
+* Internal testing changes:
+
+  * Stop testing under Python 2.7 and Python 3.4.
+  * Switch from deprecated pep8 / pytest-pep8 to pycodestyle / pytest-pycodestyle.
+  * Pin pytest to ``<6.0.0`` to avoid some breaking changes for now.
+  * Switch integration test environment from Python 3.7 to Python 3.8.
+
+.. _changelog.8_0_2:
+
+8.0.2 (2020-03-03)
+------------------
+
+* `PR #458 <https://github.com/jantman/awslimitchecker/pull/458>`_ - Fix for ZeroDivisionError on some Service Quotas limits that report as having a limit of zero. Thanks to `@deimosfr <https://github.com/deimosfr>`__.
+
+.. _changelog.8_0_1:
+
+8.0.1 (2019-12-28)
+------------------
+
+* Fixes `issue #453 <https://github.com/jantman/awslimitchecker/issues/453>`__ - remove version constraint on ``dateutil`` dependency.
+* Fixes `issue #454 <https://github.com/jantman/awslimitchecker/issues/454>`__ - remove version constraint on ``botocore`` dependency.
+* Update tox ``docs``, ``localdocs``, and ``docker`` environments to use Python 3.8.
+* Fixes `issue #451 <https://github.com/jantman/awslimitchecker/issues/451>`__ - Fix default Rules Per VPC Security Group limit.
+
 .. _changelog.8_0_0:
 
 8.0.0 (2019-11-03)
@@ -335,7 +433,7 @@ after development was ceased. The test framework used by awslimitchecker, pytest
 
 * Update README with correct boto version requirement. (Thanks to `nadlerjessie <https://github.com/nadlerjessie>`_ for the contribution.)
 * Update minimum ``boto3`` version requirement from 1.2.3 to 1.4.4; the code for `Issue #268 <https://github.com/jantman/awslimitchecker/issues/268>`_ released in 0.11.0 requires boto3 >= 1.4.4 to make the ElasticLoadBalancing ``DescribeAccountLimits`` call.
-* **Bug fix for "Running On-Demand EC2 instances" limit** - `Issue #308 <https://github.com/jantman/awslimitchecker/issues/308>`_ - The fix for `Issue #215 <https://github.com/jantman/awslimitchecker/issues/215>`_ / `PR #223 <https://github.com/jantman/awslimitchecker/pull/223>`_, released in 0.6.0 on November 11, 2016 was based on `incorrect information <https://github.com/jantman/awslimitchecker/issues/215#issuecomment-259144130>`_ about how Regional Benefit Reserved Instances (RIs) impact the service limit. The code implemented at that time subtracted Regional Benefit RIs from the count of running instances that we use to establish usage. Upon further review, as well as confirmation from AWS Support, some AWS TAMs, and the `relevant AWS documentation <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html#ri-limits>`_, only Zonal RIs (AZ-specific) are exempt from the Running On-Demand Instances limit. Regional Benefit RIs are counted the same as any other On-Demand Instances, as they don't have reserved capacity. This release stops subtracting Regional Benefit RIs from the count of Running Instances, which was causing awslimitchecker to report inaccurately low Running Instances usage.
+* **Bug fix for "Running On-Demand EC2 instances" limit** - `Issue #308 <https://github.com/jantman/awslimitchecker/issues/308>`_ - The fix for `Issue #215 <https://github.com/jantman/awslimitchecker/issues/215>`_ / `PR #223 <https://github.com/jantman/awslimitchecker/pull/223>`_, released in 0.6.0 on November 11, 2016 was based on `incorrect information <https://github.com/jantman/awslimitchecker/issues/215#issuecomment-259144130>`_ about how Regional Benefit Reserved Instances (RIs) impact the service limit. The code implemented at that time subtracted Regional Benefit RIs from the count of running instances that we use to establish usage. Upon further review, as well as confirmation from AWS Support, some AWS TAMs, and the `relevant AWS documentation <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-reserved-instances.html#ri-limits>`_, only Zonal RIs (AZ-specific) are exempt from the Running On-Demand Instances limit. Regional Benefit RIs are counted the same as any other On-Demand Instances, as they don't have reserved capacity. This release stops subtracting Regional Benefit RIs from the count of Running Instances, which was causing awslimitchecker to report inaccurately low Running Instances usage.
 
 .. _changelog.1_0_0:
 
@@ -389,7 +487,7 @@ This release **removes the ElastiCache Clusters limit**, which no longer exists.
 
 * `Issue #283 <https://github.com/jantman/awslimitchecker/issues/283>`_ - Add gitter.im chat link to README and docs.
 * `Issue #282 <https://github.com/jantman/awslimitchecker/issues/282>`_ - versionfinder caused awslimitchecker to die unexpectedly on systems without a ``git`` binary on the PATH. Bump versionfinder requirement to ``>= 0.1.1``.
-* `Issue #284 <https://github.com/jantman/awslimitchecker/issues/284>`_ - Fix ElastiCache limits to reflect what AWS Support and the `current documentation <http://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html#limits_elasticache>`_ say, instead of a `support ticket from July 2015 <https://github.com/jantman/awslimitchecker/issues/38#issuecomment-118806921>`_.
+* `Issue #284 <https://github.com/jantman/awslimitchecker/issues/284>`_ - Fix ElastiCache limits to reflect what AWS Support and the `current documentation <https://docs.aws.amazon.com/general/latest/gr/elasticache-service.html#limits_elasticache>`_ say, instead of a `support ticket from July 2015 <https://github.com/jantman/awslimitchecker/issues/38#issuecomment-118806921>`_.
 
   * Remove the "Clusters" limit, which no longer exists.
   * "Nodes per Cluster" limit is Memcached only.

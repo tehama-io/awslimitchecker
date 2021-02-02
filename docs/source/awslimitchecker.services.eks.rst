@@ -1,7 +1,7 @@
-awslimitchecker.services.ebs module
+awslimitchecker.services.eks module
 ===================================
 
-.. automodule:: awslimitchecker.services.ebs
+.. automodule:: awslimitchecker.services.eks
    :members:
    :undoc-members:
    :show-inheritance:

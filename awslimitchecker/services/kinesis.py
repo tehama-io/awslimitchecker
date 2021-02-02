@@ -1,5 +1,5 @@
 """
-awslimitchecker/services/ses.py
+awslimitchecker/services/kinesis.py
 
 The latest version of this package is available at:
 <https://github.com/jantman/awslimitchecker>
@@ -42,17 +42,15 @@ import logging
 
 from .base import _AwsService
 from ..limit import AwsLimit
-from botocore.exceptions import (
-    EndpointConnectionError, ClientError, ConnectTimeoutError
-)
 
 logger = logging.getLogger(__name__)
 
 
-class _SesService(_AwsService):
+class _KinesisService(_AwsService):
 
-    service_name = 'SES'
-    api_name = 'ses'  # AWS API name to connect to (boto3.client)
+    service_name = 'Kinesis'
+    api_name = 'kinesis'
+    quotas_service_code = 'kinesis'
 
     def find_usage(self):
         """
@@ -61,27 +59,20 @@ class _SesService(_AwsService):
         :py:meth:`~.AwsLimit._add_current_usage`.
         """
         logger.debug("Checking usage for service %s", self.service_name)
+        self.connect()
         for lim in self.limits.values():
             lim._reset_usage()
-        try:
-            self.connect()
-            resp = self.conn.get_send_quota()
-        except EndpointConnectionError as ex:
-            logger.warning('Skipping SES: %s', str(ex))
-            return
-        except ClientError as ex:
-            if ex.response['Error']['Code'] in ['AccessDenied', '503']:
-                logger.warning('Skipping SES: %s', ex)
-                return
-            raise
-        except ConnectTimeoutError as ex:
-            logger.warning('Skipping SES: %s', str(ex))
-            return
-        self.limits['Daily sending quota']._add_current_usage(
-            resp['SentLast24Hours']
-        )
+        self._find_shards()
         self._have_usage = True
         logger.debug("Done checking usage.")
+
+    def _find_shards(self):
+        describe_limits_response = self.conn.describe_limits()
+        self.limits['Shards per Region']._add_current_usage(
+            describe_limits_response['OpenShardCount'],
+            resource_id=self._boto3_connection_kwargs['region_name'],
+            aws_type='AWS::Kinesis::Stream'
+        )
 
     def get_limits(self):
         """
@@ -93,14 +84,20 @@ class _SesService(_AwsService):
         """
         if self.limits != {}:
             return self.limits
+
+        self.connect()
+        region_name = self.conn._client_config.region_name
+        regions_500_shards = ['us-east-1', 'us-west-2', 'eu-west-1']
+
         limits = {}
-        limits['Daily sending quota'] = AwsLimit(
-            'Daily sending quota',
+
+        limits['Shards per Region'] = AwsLimit(
+            'Shards per Region',
             self,
-            200,
+            500 if region_name in regions_500_shards else 200,
             self.warning_threshold,
             self.critical_threshold,
-            limit_type='AWS::SES::Email',
+            limit_type='AWS::Kinesis::Stream',
         )
         self.limits = limits
         return limits
@@ -110,21 +107,12 @@ class _SesService(_AwsService):
         Call the service's API action to retrieve limit/quota information, and
         update AwsLimit objects in ``self.limits`` with this information.
         """
-        try:
-            self.connect()
-            resp = self.conn.get_send_quota()
-        except EndpointConnectionError as ex:
-            logger.warning('Skipping SES: %s', str(ex))
-            return
-        except ClientError as ex:
-            if ex.response['Error']['Code'] in ['AccessDenied', '503']:
-                logger.warning('Skipping SES: %s', ex)
-                return
-            raise
-        except ConnectTimeoutError as ex:
-            logger.warning('Skipping SES: %s', str(ex))
-            return
-        self.limits['Daily sending quota']._set_api_limit(resp['Max24HourSend'])
+        logger.debug("Updating limits for Kinesis from the AWS API")
+        self.connect()
+        describe_limits_response = self.conn.describe_limits()
+        self.limits['Shards per Region']._set_api_limit(
+            describe_limits_response['ShardLimit']
+        )
 
     def required_iam_permissions(self):
         """
@@ -136,5 +124,5 @@ class _SesService(_AwsService):
         :rtype: list
         """
         return [
-            "ses:GetSendQuota",
+            'kinesis:DescribeLimits',
         ]
