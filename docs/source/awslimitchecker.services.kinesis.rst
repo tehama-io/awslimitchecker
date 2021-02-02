@@ -1,7 +1,7 @@
-awslimitchecker.services.route53 module
+awslimitchecker.services.kinesis module
 =======================================
 
-.. automodule:: awslimitchecker.services.route53
+.. automodule:: awslimitchecker.services.kinesis
    :members:
    :undoc-members:
    :show-inheritance:

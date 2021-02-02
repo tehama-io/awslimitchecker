@@ -27,8 +27,8 @@ awslimitchecker
 
 Master:
 
-.. image:: https://secure.travis-ci.org/jantman/awslimitchecker.png?branch=master
-   :target: http://travis-ci.org/jantman/awslimitchecker
+.. image:: https://api.travis-ci.com/jantman/awslimitchecker.svg?branch=master
+   :target: http://travis-ci.com/jantman/awslimitchecker
    :alt: travis-ci for master branch
 
 .. image:: https://codecov.io/github/jantman/awslimitchecker/coverage.svg?branch=master
@@ -41,8 +41,8 @@ Master:
 
 Develop:
 
-.. image:: https://secure.travis-ci.org/jantman/awslimitchecker.png?branch=develop
-   :target: http://travis-ci.org/jantman/awslimitchecker
+.. image:: https://api.travis-ci.com/jantman/awslimitchecker.svg?branch=develop
+   :target: http://travis-ci.com/jantman/awslimitchecker
    :alt: travis-ci for develop branch
 
 .. image:: https://codecov.io/github/jantman/awslimitchecker/coverage.svg?branch=develop
@@ -100,7 +100,7 @@ Requirements
 
 **Either Docker in order to run via the** `docker image <http://awslimitchecker.readthedocs.io/en/latest/docker.html>`__, **or:**
 
-* Python 3.5 or newer. Python 2.7 will not be supported as of January 1, 2010.
+* Python 3.5 or newer.
 * Python `VirtualEnv <http://www.virtualenv.org/>`_ and ``pip`` (recommended installation method; your OS/distribution should have packages for these)
 * `boto3 <http://boto3.readthedocs.org/>`_ >= 1.4.6 and its dependency `botocore <https://botocore.readthedocs.io/en/latest/>`_ >= 1.6.0.
 

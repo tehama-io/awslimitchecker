@@ -45,12 +45,9 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 ################################################################################
 """
 
-import sys
 import os
 import re
 
-from _pytest.terminal import TerminalReporter
-import pytest
 from awslimitchecker.services import _services
 from awslimitchecker.tests.test_integration import REGION
 
@@ -108,27 +105,6 @@ class OutputSanitizer(object):
         return self._tw.fullwidth
 
 
-class WholeNodeIDTerminalReporter(TerminalReporter):
-
-    def _outrep_summary(self, rep):
-        sanitizer = OutputSanitizer(self._tw)
-        rep.toterminal(sanitizer)
-        for secname, content in rep.sections:
-            self._tw.sep("-", secname)
-            if content[-1:] == "\n":
-                content = content[:-1]
-            sanitizer.line(content)
-
-
-@pytest.mark.trylast
-def pytest_configure(config):
-    # Get the standard terminal reporter plugin and replace it with our
-    standard_reporter = config.pluginmanager.getplugin('terminalreporter')
-    wholenodeid_reporter = WholeNodeIDTerminalReporter(config, sys.stdout)
-    config.pluginmanager.unregister(standard_reporter)
-    config.pluginmanager.register(wholenodeid_reporter, 'terminalreporter')
-
-
 def pytest_generate_tests(metafunc):
     if (
         metafunc.cls.__name__ == 'Test_AwsServiceSubclasses' and
@@ -177,7 +153,7 @@ def param_for_integration_test_verify_usage(metafunc):
             False
         ],
         [
-            {'region': 'sa-east-1'},
+            {'region': 'ap-southeast-1'},
             'normal',
             None,
             False,
@@ -278,7 +254,7 @@ def param_for_integration_test_verify_limits(metafunc):
             False
         ],
         [
-            {'region': 'sa-east-1'},
+            {'region': 'ap-southeast-1'},
             'normal',
             None,
             True,
